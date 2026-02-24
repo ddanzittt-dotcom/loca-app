@@ -1,0 +1,12 @@
+{
+  "name": "LOCA",
+  "short_name": "LOCA",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#F8F5F2",
+  "theme_color": "#C9686E",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

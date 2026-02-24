@@ -1,426 +1,163 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#C9686E">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LOCA">
-<link rel="manifest" href="./manifest.json">
-<title>LOCA</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
---pri:#C9686E;--pri-lt:#F7ECEC;--pri-md:#E8A0A3;
---sec:#6BA08F;--sec-lt:#EAF4F1;
---acc:#F0C060;--acc-lt:#FEF7E5;
---bg:#F8F5F2;--srf:#FFFFFF;--srf2:#FDFCFB;
---bdr:#EDE9E5;--bdr2:#D9D4CF;
---txt:#2C2925;--txt2:#5C5652;--mut:#9C9590;
---danger:#C9686E;--success:#6BA08F;--warn:#E8A850;
---safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
-}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
-input,textarea,select,button{font-family:inherit}
-.leaflet-control-attribution{font-size:9px!important;opacity:.5}
-.leaflet-control-zoom{border:none!important;box-shadow:0 6px 20px rgba(0,0,0,.12)!important;border-radius:14px!important;overflow:hidden}
-.leaflet-control-zoom a{width:38px!important;height:38px!important;line-height:38px!important;font-size:18px!important;border:none!important;background:rgba(255,255,255,.95)!important;backdrop-filter:blur(10px)}
-#app{position:fixed;inset:0;display:flex;flex-direction:column}
-#topbar{height:54px;display:flex;align-items:center;padding:0 12px;gap:6px;z-index:3000;flex-shrink:0;background:transparent;transition:background .2s}
-#topbar.solid{background:var(--srf);border-bottom:1px solid var(--bdr)}
-.logo{font-size:19px;font-weight:900;letter-spacing:-.5px;color:var(--pri);flex-shrink:0}.logo span{color:var(--sec)}
-#map-sel-btn{flex:1;display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:14px;border:1px solid var(--bdr);background:rgba(255,255,255,.93);backdrop-filter:blur(10px);cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.07);min-width:0}
-#map-sel-btn .dot{width:10px;height:10px;border-radius:5px;flex-shrink:0}
-#map-sel-btn .t{font-size:13px;font-weight:800;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-#map-sel-btn .arr{margin-left:auto;font-size:11px;color:var(--mut);flex-shrink:0}
-.icon-btn{height:36px;border-radius:12px;border:1px solid var(--bdr);background:rgba(255,255,255,.93);cursor:pointer;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.06);flex-shrink:0;padding:0 8px}
-#content{flex:1;position:relative;overflow:hidden}
-#tabbar{height:72px;padding-bottom:var(--safe-b);background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-top:1px solid var(--bdr);display:flex;justify-content:space-around;align-items:flex-start;padding-top:6px;z-index:2500;flex-shrink:0}
-.tab-btn{background:none;border:none;cursor:pointer;padding:5px 14px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:60px}
-.tab-btn .ic{font-size:21px;transition:opacity .15s}.tab-btn .lb{font-size:10px;font-weight:600;color:var(--mut);transition:color .15s}
-.tab-btn.on .ic{opacity:1}.tab-btn:not(.on) .ic{opacity:.5;filter:grayscale(.6)}
-.tab-btn.on .lb{font-weight:800;color:var(--pri)}
-.tab-btn .ind{width:4px;height:4px;border-radius:2px;background:var(--pri);margin-top:2px;opacity:0;transition:opacity .15s}.tab-btn.on .ind{opacity:1}
-.screen{position:absolute;inset:0;display:none;flex-direction:column}.screen.active{display:flex}
-#map-container{position:absolute;inset:0}
-#map{width:100%;height:100%}
-#map.cursor-pin{cursor:crosshair}#map.cursor-line{cursor:crosshair}#map.cursor-poly{cursor:crosshair}
-.map-search{position:absolute;top:10px;left:10px;right:10px;z-index:2000}
-.search-box{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);border:1px solid var(--bdr);border-radius:16px;padding:9px 12px;box-shadow:0 8px 22px rgba(0,0,0,.09)}
-.search-box input{flex:1;border:none;background:transparent;outline:none;font-size:13px;color:var(--txt);font-weight:700}
-.search-results{margin-top:6px;background:rgba(255,255,255,.98);border:1px solid var(--bdr);border-radius:16px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.11);max-height:240px;overflow-y:auto;display:none}
-.search-results.open{display:block}
-.sr-item{padding:10px 12px;cursor:pointer;border-top:1px solid var(--bdr)}.sr-item:first-child{border-top:none}
-.sr-item .n{font-size:12px;font-weight:900}.sr-item .a{font-size:10px;color:var(--mut);margin-top:2px}
-.draw-pill{position:absolute;top:62px;left:50%;transform:translateX(-50%);z-index:2100;color:#fff;padding:7px 14px;border-radius:999px;font-size:11px;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none}.draw-pill.on{display:block}
-.draw-ctrl{position:absolute;bottom:100px;left:10px;right:10px;z-index:2200;display:none;gap:6px}.draw-ctrl.on{display:flex}
-.fab-col{position:absolute;right:12px;bottom:14px;z-index:2100;display:flex;flex-direction:column;gap:6px}
-.fab{width:48px;height:auto;border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.93);cursor:pointer;font-size:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.09);transition:all .15s;padding:8px 4px;gap:2px}
-.fab .fab-label{font-size:8px;font-weight:900;color:var(--txt2);white-space:nowrap}
-.fab.active{border-color:var(--pri);background:var(--pri-lt)}.fab.active .fab-label{color:var(--pri)}
-.stats-pill{position:absolute;left:10px;bottom:14px;z-index:2100;background:rgba(255,255,255,.92);border:1px solid var(--bdr);border-radius:16px;padding:9px 12px;box-shadow:0 8px 22px rgba(0,0,0,.09);max-width:260px}
-.stats-pill .t{font-size:11px;font-weight:900}.stats-pill .s{font-size:10px;color:var(--mut);font-weight:700;margin-top:2px}
-.filter-bar{position:absolute;left:10px;bottom:80px;z-index:2100;background:rgba(255,255,255,.92);border:1px solid var(--bdr);border-radius:16px;padding:8px 12px;box-shadow:0 8px 22px rgba(0,0,0,.07)}
-.filter-bar.open{right:72px}.filter-bar:not(.open){right:auto}
-.filter-bar .fl{font-size:11px;font-weight:900;color:var(--txt2)}
-.chip{border:1px solid var(--bdr);background:#fff;color:var(--txt2);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap;transition:all .12s}
-.chip.on{border-color:var(--pri);background:var(--pri-lt);color:var(--pri)}
-.overlay{position:fixed;inset:0;z-index:5000;display:none}.overlay.open{display:block}
-.overlay .bg{position:absolute;inset:0;background:rgba(0,0,0,.28);backdrop-filter:blur(2px)}
-.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--srf);border-radius:22px 22px 0 0;box-shadow:0 -18px 50px rgba(0,0,0,.2);overflow-y:auto;max-height:85vh;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,.32,1)}
-.overlay.open .sheet{transform:translateY(0)}
-.sheet .handle{display:flex;justify-content:center;padding:10px 0 6px}.sheet .handle div{width:40px;height:4px;border-radius:2px;background:var(--bdr2)}
-.sheet-body{padding:2px 16px 20px}
-.list-scroll{flex:1;overflow-y:auto;padding:0 14px 16px}
-.f-card{background:var(--srf);border:1px solid var(--bdr);border-radius:16px;padding:11px 12px;display:flex;gap:10px;align-items:center;margin-bottom:8px;cursor:pointer;transition:box-shadow .12s}
-.f-card:active{box-shadow:0 4px 16px rgba(0,0,0,.08)}
-.f-card .icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.f-card .info{flex:1;min-width:0}.f-card .info .n{font-size:13px;font-weight:900;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.f-card .info .meta{font-size:10px;color:var(--mut);margin-top:2px;font-weight:700}
-.f-card .right{text-align:right;flex-shrink:0}.f-card .right .d{font-size:10px;color:var(--mut);font-weight:800}
-.f-card .right .lc{font-size:9px;color:var(--sec);font-weight:900;margin-top:2px}
-.page-scroll{position:absolute;inset:0;overflow-y:auto;padding:14px}
-.page-title{font-size:19px;font-weight:900}.page-sub{font-size:11px;color:var(--mut);font-weight:700;margin-top:4px;line-height:1.5}
-.card{background:var(--srf);border:1px solid var(--bdr);border-radius:18px;padding:13px;margin-bottom:10px}
-.btn{border:none;padding:11px 14px;border-radius:14px;font-size:12px;font-weight:900;cursor:pointer;transition:opacity .1s}.btn:active{opacity:.8}
-.btn-pri{background:var(--pri);color:#fff}.btn-sec{background:var(--sec);color:#fff}
-.btn-out{border:1px solid var(--bdr);background:#fff;color:var(--txt2)}
-.btn-danger{border:1px solid var(--bdr);background:var(--pri-lt);color:var(--pri)}
-.btn-block{width:100%;display:block}
-.input{width:100%;border-radius:14px;border:1px solid var(--bdr);padding:11px 12px;font-size:13px;font-weight:700;outline:none;background:#fff}.input:focus{border-color:var(--pri)}
-.label{font-size:10px;color:var(--mut);font-weight:900;margin-bottom:5px;display:block}
-.gap-8{display:flex;gap:8px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-14{margin-top:14px}.mt-16{margin-top:16px}
-#toasts{position:fixed;top:12px;left:0;right:0;z-index:9999;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
-.toast{max-width:340px;width:calc(100% - 28px);color:#fff;padding:9px 14px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 8px 26px rgba(0,0,0,.16);animation:toastIn .22s ease forwards}
-@keyframes toastIn{from{transform:translateY(-8px);opacity:0}to{transform:translateY(0);opacity:1}}
-.toast.out{animation:toastOut .2s ease forwards}
-@keyframes toastOut{to{transform:translateY(-8px);opacity:0}}
-@keyframes bounce{0%{transform:translateY(-30px);opacity:0}60%{transform:translateY(4px);opacity:1}100%{transform:translateY(-8px);opacity:1}}
-@keyframes gpsPulse{0%{box-shadow:0 0 0 0 rgba(79,134,198,.4)}70%{box-shadow:0 0 0 12px rgba(79,134,198,0)}100%{box-shadow:0 0 0 0 rgba(79,134,198,0)}}
-@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.4}}
-.confirm-overlay{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);backdrop-filter:blur(3px)}
-.confirm-overlay.open{display:flex}
-.confirm-box{background:#fff;border-radius:20px;padding:20px;width:calc(100% - 48px);max-width:320px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.cat-btn{border-radius:14px;border:1px solid var(--bdr);background:#fff;padding:9px 4px;cursor:pointer;text-align:center;transition:all .12s}
-.cat-btn.on{border-color:var(--pri);background:var(--pri-lt)}
-.cat-btn .e{font-size:17px}.cat-btn .l{font-size:10px;font-weight:900;margin-top:3px}
-.cat-btn.on .l{color:var(--pri)}.cat-btn:not(.on) .l{color:var(--txt2)}
-.mood-bar{display:flex;gap:5px;flex-wrap:wrap}
-.mood-btn{width:32px;height:32px;border-radius:16px;border:1px solid var(--bdr);background:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .1s}
-.mood-btn.on{border:2px solid var(--pri);background:var(--pri-lt)}
-.log-entry{background:var(--srf2);border:1px solid var(--bdr);border-radius:16px;padding:10px 12px;margin-bottom:6px}
-.log-entry .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.log-entry .top .d{font-size:10px;color:var(--mut);font-weight:900}.log-entry .top .m{font-size:15px}
-.log-entry .note{font-size:12px;font-weight:700;line-height:1.5}
-.role-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:9px;font-weight:900;flex-shrink:0}
-.role-owner{background:#FEF7E5;color:#D4960A;border:1px solid #F0C060}
-.role-editor{background:var(--sec-lt);color:var(--sec);border:1px solid var(--sec)}
-.role-observer{background:#EEF2FF;color:#6366F1;border:1px solid #A5B4FC}
-.sync-dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
-.sync-active{background:#22C55E;animation:syncPulse 2s infinite}
-.sync-idle{background:#D1D5DB}
-.sync-error{background:#EF4444}
-.presence-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
-.presence-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;background:var(--bg);border:1px solid var(--bdr)}
-.observer-banner{background:#EEF2FF;border:1px solid #A5B4FC;border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.observer-banner .ob-icon{font-size:18px}.observer-banner .ob-text{font-size:11px;font-weight:800;color:#6366F1;line-height:1.4}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#C9686E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <title>LOCA</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <!-- App -->
+  <link rel="stylesheet" href="./styles.css" />
 </head>
+
 <body>
-<div id="toasts"></div>
-<div class="confirm-overlay" id="confirm-dialog">
-  <div class="confirm-box">
-    <div style="font-size:14px;font-weight:900;text-align:center" id="confirm-title"></div>
-    <div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;margin-top:6px" id="confirm-msg"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-out" style="flex:1" onclick="closeConfirm()">취소</button>
-      <button class="btn btn-pri" style="flex:1;background:var(--danger)" onclick="execConfirm()">확인</button>
+  <div id="toasts"></div>
+
+  <div class="confirm-overlay" id="confirm-dialog">
+    <div class="confirm-box">
+      <div style="font-size:14px;font-weight:900;text-align:center" id="confirm-title"></div>
+      <div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;margin-top:6px" id="confirm-msg"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-out" style="flex:1" onclick="closeConfirm()">취소</button>
+        <button class="btn btn-pri" style="flex:1;background:var(--danger)" onclick="execConfirm()">확인</button>
+      </div>
     </div>
   </div>
-</div>
-<div id="app">
-  <div id="topbar">
-    <div class="logo">LO<span>CA</span></div>
-    <button id="map-sel-btn" onclick="openSheet('mapsel')">
-      <div class="dot" id="map-dot"></div>
-      <div class="t" id="map-title-display">지도 선택</div>
-      <div id="sync-indicator" style="display:none"><div class="sync-dot sync-idle"></div></div>
-      <div class="arr">▾</div>
-    </button>
-    <button class="icon-btn" onclick="showRenameMap()" id="btn-rename">✏️</button>
-    <button class="icon-btn" onclick="showNewMapInput('my')" id="btn-newmy" style="color:var(--txt2)">+지도</button>
-    <button class="icon-btn" onclick="showNewMapInput('our')" id="btn-newour" style="color:var(--sec)">+공유</button>
-  </div>
-  <div id="content">
-    <div class="screen active" id="screen-map">
-      <div id="map-container">
-        <div id="map"></div>
-        <div class="map-search">
-          <div class="search-box">
-            <span style="font-size:14px;opacity:.65">🔍</span>
-            <input id="search-input" placeholder="주소 또는 지명 검색…" oninput="onSearch(this.value)">
-            <button class="btn btn-out" style="padding:5px 9px;font-size:11px;display:none" id="search-clear" onclick="clearSearch()">✕</button>
+
+  <div id="app">
+    <div id="topbar">
+      <div class="logo">LO<span>CA</span></div>
+      <button id="map-sel-btn" onclick="openSheet('mapsel')">
+        <div class="dot" id="map-dot"></div>
+        <div class="t" id="map-title-display">지도 선택</div>
+        <div id="sync-indicator" style="display:none"><div class="sync-dot sync-idle"></div></div>
+        <div class="arr">▾</div>
+      </button>
+      <button class="icon-btn" onclick="showRenameMap()" id="btn-rename">✏️</button>
+      <button class="icon-btn" onclick="showNewMapInput('my')" id="btn-newmy" style="color:var(--txt2)">+지도</button>
+      <button class="icon-btn" onclick="showNewMapInput('our')" id="btn-newour" style="color:var(--sec)">+공유</button>
+    </div>
+
+    <div id="content">
+      <div class="screen active" id="screen-map">
+        <div id="map-container">
+          <div id="map"></div>
+
+          <div class="map-search">
+            <div class="search-box">
+              <span style="font-size:14px;opacity:.65">🔍</span>
+              <input id="search-input" placeholder="주소 또는 지명 검색…" oninput="onSearch(this.value)">
+              <button class="btn btn-out" style="padding:5px 9px;font-size:11px;display:none" id="search-clear" onclick="clearSearch()">✕</button>
+            </div>
+            <div class="search-results" id="search-results"></div>
           </div>
-          <div class="search-results" id="search-results"></div>
+
+          <div id="observer-map-banner" style="display:none;position:absolute;top:60px;left:10px;right:10px;z-index:2100">
+            <div class="observer-banner"><div class="ob-icon">👁</div><div class="ob-text">관찰자 모드 — 보기만 가능합니다</div></div>
+          </div>
+
+          <div class="draw-pill" id="draw-pill"></div>
+
+          <div class="draw-ctrl" id="draw-ctrl">
+            <button class="btn btn-out" style="flex:1" onclick="undoDraft()">↩︎ 되돌리기 (<span id="pts-count">0</span>)</button>
+            <button class="btn btn-sec" style="flex:1" onclick="finishDraft()">✅ 완료</button>
+            <button class="btn btn-danger" style="padding:11px" onclick="cancelDraft()">✕</button>
+          </div>
+
+          <div class="filter-bar" id="filter-bar">
+            <div class="fl" onclick="toggleFilterBar()" style="cursor:pointer;display:flex;align-items:center;gap:4px">
+              필터 <span id="filter-count" style="font-size:9px;color:var(--pri)"></span><span id="filter-arrow" style="font-size:9px">▲</span>
+            </div>
+            <div id="filter-content" style="display:none;margin-top:8px">
+              <div style="display:flex;gap:5px;flex-wrap:wrap" id="filter-chips"></div>
+            </div>
+          </div>
+
+          <div class="stats-pill" id="stats-pill">
+            <div class="t" id="stats-title">-</div>
+            <div class="s" id="stats-sub">📍 0개 · 📝 0개</div>
+            <div class="s" id="stats-role" style="display:none"></div>
+            <div class="presence-row mt-8" id="stats-presence" style="display:none"></div>
+          </div>
+
+          <div id="mini-card" style="display:none;position:absolute;left:10px;right:72px;bottom:80px;z-index:2300;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border:1px solid var(--bdr);border-radius:18px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,.14)"></div>
+
+          <div class="fab-col" id="fab-col">
+            <button class="fab" id="fab-gps" onclick="goToMyLocation()" style="background:rgba(255,255,255,.93)">📡<span class="fab-label">내 위치</span></button>
+            <button class="fab editor-only" id="fab-pin" onclick="toggleDraw('pin')">📍<span class="fab-label">핀 추가</span></button>
+            <button class="fab editor-only" id="fab-line" onclick="toggleDraw('line')">🔀<span class="fab-label">경로</span></button>
+            <button class="fab editor-only" id="fab-poly" onclick="toggleDraw('poly')">⬡<span class="fab-label">구역</span></button>
+          </div>
         </div>
-        <div id="observer-map-banner" style="display:none;position:absolute;top:60px;left:10px;right:10px;z-index:2100">
-          <div class="observer-banner"><div class="ob-icon">👁</div><div class="ob-text">관찰자 모드 — 보기만 가능합니다</div></div>
+      </div>
+
+      <div class="screen" id="screen-list">
+        <div style="padding:12px 14px 6px">
+          <div style="font-size:18px;font-weight:900">📋 피처 목록</div>
+          <div style="font-size:11px;color:var(--mut);font-weight:700;margin-top:2px" id="list-subtitle"></div>
+          <div class="search-box mt-8">
+            <span style="font-size:13px;opacity:.6">🔍</span>
+            <input id="list-search" placeholder="검색…" oninput="renderList()">
+          </div>
+          <div id="list-chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px"></div>
         </div>
-        <div class="draw-pill" id="draw-pill"></div>
-        <div class="draw-ctrl" id="draw-ctrl">
-          <button class="btn btn-out" style="flex:1" onclick="undoDraft()">↩︎ 되돌리기 (<span id="pts-count">0</span>)</button>
-          <button class="btn btn-sec" style="flex:1" onclick="finishDraft()">✅ 완료</button>
-          <button class="btn btn-danger" style="padding:11px" onclick="cancelDraft()">✕</button>
-        </div>
-        <div class="filter-bar" id="filter-bar">
-          <div class="fl" onclick="toggleFilterBar()" style="cursor:pointer;display:flex;align-items:center;gap:4px">필터 <span id="filter-count" style="font-size:9px;color:var(--pri)"></span><span id="filter-arrow" style="font-size:9px">▲</span></div>
-          <div id="filter-content" style="display:none;margin-top:8px"><div style="display:flex;gap:5px;flex-wrap:wrap" id="filter-chips"></div></div>
-        </div>
-        <div class="stats-pill" id="stats-pill">
-          <div class="t" id="stats-title">-</div>
-          <div class="s" id="stats-sub">📍 0개 · 📝 0개</div>
-          <div class="s" id="stats-role" style="display:none"></div>
-          <div class="presence-row mt-8" id="stats-presence" style="display:none"></div>
-        </div>
-        <div id="mini-card" style="display:none;position:absolute;left:10px;right:72px;bottom:80px;z-index:2300;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border:1px solid var(--bdr);border-radius:18px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,.14)"></div>
-        <div class="fab-col" id="fab-col">
-          <button class="fab" id="fab-gps" onclick="goToMyLocation()" style="background:rgba(255,255,255,.93)">📡<span class="fab-label">내 위치</span></button>
-          <button class="fab editor-only" id="fab-pin" onclick="toggleDraw('pin')">📍<span class="fab-label">핀 추가</span></button>
-          <button class="fab editor-only" id="fab-line" onclick="toggleDraw('line')">🔀<span class="fab-label">경로</span></button>
-          <button class="fab editor-only" id="fab-poly" onclick="toggleDraw('poly')">⬡<span class="fab-label">구역</span></button>
+        <div class="list-scroll" id="list-scroll"></div>
+      </div>
+
+      <div class="screen" id="screen-together"><div class="page-scroll" id="together-scroll"></div></div>
+
+      <div class="screen" id="screen-settings">
+        <div class="page-scroll">
+          <div class="page-title">⚙️ 설정</div>
+          <div class="mt-14">
+            <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="exportJson()">
+              <div style="font-size:22px">📦</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:900">JSON 백업</div></div>
+              <div style="color:var(--mut)">›</div>
+            </div>
+
+            <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="document.getElementById('import-file').click()">
+              <div style="font-size:22px">📥</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:900">JSON 가져오기</div></div>
+              <div style="color:var(--mut)">›</div>
+            </div>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="importFile(event)">
+
+            <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="resetAll()">
+              <div style="font-size:22px">🧹</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:900">초기화</div></div>
+              <div style="color:var(--mut)">›</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="screen" id="screen-list">
-      <div style="padding:12px 14px 6px">
-        <div style="font-size:18px;font-weight:900">📋 피처 목록</div>
-        <div style="font-size:11px;color:var(--mut);font-weight:700;margin-top:2px" id="list-subtitle"></div>
-        <div class="search-box mt-8"><span style="font-size:13px;opacity:.6">🔍</span><input id="list-search" placeholder="검색…" oninput="renderList()"></div>
-        <div id="list-chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px"></div>
-      </div>
-      <div class="list-scroll" id="list-scroll"></div>
-    </div>
-    <div class="screen" id="screen-together"><div class="page-scroll" id="together-scroll"></div></div>
-    <div class="screen" id="screen-settings">
-      <div class="page-scroll">
-        <div class="page-title">⚙️ 설정</div>
-        <div class="mt-14">
-          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="exportJson()"><div style="font-size:22px">📦</div><div style="flex:1"><div style="font-size:13px;font-weight:900">JSON 백업</div></div><div style="color:var(--mut)">›</div></div>
-          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="document.getElementById('import-file').click()"><div style="font-size:22px">📥</div><div style="flex:1"><div style="font-size:13px;font-weight:900">JSON 가져오기</div></div><div style="color:var(--mut)">›</div></div>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importFile(event)">
-          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="resetAll()"><div style="font-size:22px">🧹</div><div style="flex:1"><div style="font-size:13px;font-weight:900">초기화</div></div><div style="color:var(--mut)">›</div></div>
-        </div>
-      </div>
+
+    <div id="tabbar">
+      <button class="tab-btn on" data-tab="map" onclick="switchTab('map')"><div class="ic">🗺</div><div class="lb">내 지도</div><div class="ind"></div></button>
+      <button class="tab-btn" data-tab="list" onclick="switchTab('list')"><div class="ic">📋</div><div class="lb">목록</div><div class="ind"></div></button>
+      <button class="tab-btn" data-tab="together" onclick="switchTab('together')"><div class="ic">👥</div><div class="lb">함께</div><div class="ind"></div></button>
+      <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')"><div class="ic">⚙️</div><div class="lb">설정</div><div class="ind"></div></button>
     </div>
   </div>
-  <div id="tabbar">
-    <button class="tab-btn on" data-tab="map" onclick="switchTab('map')"><div class="ic">🗺</div><div class="lb">내 지도</div><div class="ind"></div></button>
-    <button class="tab-btn" data-tab="list" onclick="switchTab('list')"><div class="ic">📋</div><div class="lb">목록</div><div class="ind"></div></button>
-    <button class="tab-btn" data-tab="together" onclick="switchTab('together')"><div class="ic">👥</div><div class="lb">함께</div><div class="ind"></div></button>
-    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')"><div class="ic">⚙️</div><div class="lb">설정</div><div class="ind"></div></button>
-  </div>
-</div>
-<div class="overlay" id="sheet-mapsel"><div class="bg" onclick="closeSheet('mapsel')"></div><div class="sheet" style="max-height:72vh"><div class="handle"><div></div></div><div class="sheet-body" id="mapsel-body"></div></div></div>
-<div class="overlay" id="sheet-detail"><div class="bg" onclick="closeSheet('detail')"></div><div class="sheet" style="max-height:85vh"><div class="handle"><div></div></div><div class="sheet-body" id="detail-body"></div></div></div>
-<div class="overlay" id="sheet-poster"><div class="bg" onclick="closeSheet('poster')"></div><div class="sheet" style="max-height:88vh"><div class="handle"><div></div></div><div class="sheet-body" id="poster-body"></div></div></div>
-<div class="overlay" id="sheet-rename"><div class="bg" onclick="closeSheet('rename')"></div><div class="sheet" style="max-height:40vh"><div class="handle"><div></div></div><div class="sheet-body" id="rename-body"></div></div></div>
-<div class="overlay" id="sheet-newmap"><div class="bg" onclick="closeSheet('newmap')"></div><div class="sheet" style="max-height:50vh"><div class="handle"><div></div></div><div class="sheet-body" id="newmap-body"></div></div></div>
 
-<script>
-// ═══════════════════════════════════════
-// Data & Constants
-// ═══════════════════════════════════════
-let CATS=[{id:"cafe",label:"카페",emoji:"☕"},{id:"food",label:"맛집",emoji:"🍽️"},{id:"park",label:"공원",emoji:"🌳"},{id:"shop",label:"쇼핑",emoji:"🛍️"},{id:"culture",label:"문화",emoji:"🎨"},{id:"transport",label:"교통",emoji:"🚇"},{id:"home",label:"집/숙소",emoji:"🏠"},{id:"etc",label:"기타",emoji:"📌"}];
-const MOODS=["","😊","🥰","😋","🤩","😌","🥲","😤","🧐"];
-const THEMES=["#C9686E","#6BA08F","#F0C060","#9B7ED8","#4F86C6","#F28C8C"];
-const catById=id=>CATS.find(c=>c.id===id)||CATS[7];
-const uid=(p="id")=>`${p}_${Math.random().toString(36).slice(2,8)}${Date.now().toString(36)}`;
-const iso=()=>new Date().toISOString().slice(0,10);
-const hasSharedStorage=!!(typeof window!=='undefined'&&window.storage&&typeof window.storage.set==='function');
-const MY_CLIENT_ID=uid('cli');
-const EMOJI_PICKS=["📍","☕","🍽️","🌳","🛍️","🎨","🚇","🏠","📌","🏥","🎵","📚","🏋️","🐾","🌊","⛰️","🎮","🍺","🧁","💼","✈️","⛪","🏟️","🔥","💡","🎭","🛒","🏖️","🚗","🌸"];
+  <div class="overlay" id="sheet-mapsel"><div class="bg" onclick="closeSheet('mapsel')"></div><div class="sheet" style="max-height:72vh"><div class="handle"><div></div></div><div class="sheet-body" id="mapsel-body"></div></div></div>
+  <div class="overlay" id="sheet-detail"><div class="bg" onclick="closeSheet('detail')"></div><div class="sheet" style="max-height:85vh"><div class="handle"><div></div></div><div class="sheet-body" id="detail-body"></div></div></div>
+  <div class="overlay" id="sheet-poster"><div class="bg" onclick="closeSheet('poster')"></div><div class="sheet" style="max-height:88vh"><div class="handle"><div></div></div><div class="sheet-body" id="poster-body"></div></div></div>
+  <div class="overlay" id="sheet-rename"><div class="bg" onclick="closeSheet('rename')"></div><div class="sheet" style="max-height:40vh"><div class="handle"><div></div></div><div class="sheet-body" id="rename-body"></div></div></div>
+  <div class="overlay" id="sheet-newmap"><div class="bg" onclick="closeSheet('newmap')"></div><div class="sheet" style="max-height:50vh"><div class="handle"><div></div></div><div class="sheet-body" id="newmap-body"></div></div></div>
 
-let maps=[
-  {id:"m1",kind:"my",title:"성수동 탐험",desc:"성수 일대 나만의 장소들",theme:"#C9686E",ver:1},
-  {id:"m2",kind:"our",title:"우리의 데이트맵",desc:"함께한 장소 기록",theme:"#6BA08F",ver:1}
-];
-let features=[
-  {id:"f1",mapId:"m1",type:"pin",title:"블루보틀 성수",category:"cafe",tags:["커피","디저트"],emoji:"☕",isHl:true,geojson:{type:"Feature",geometry:{type:"Point",coordinates:[127.056,37.544]},properties:{}},logs:[{id:"l1",date:iso(),note:"오트밀크 라떼가 최고!",mood:"😋"}]},
-  {id:"f2",mapId:"m1",type:"pin",title:"서울숲",category:"park",tags:["산책"],emoji:"🌳",isHl:false,geojson:{type:"Feature",geometry:{type:"Point",coordinates:[127.038,37.544]},properties:{}},logs:[]},
-  {id:"f3",mapId:"m1",type:"line",title:"성수→뚝섬 산책로",category:"etc",tags:["산책"],emoji:"🚶",isHl:false,geojson:{type:"Feature",geometry:{type:"LineString",coordinates:[[127.044,37.543],[127.048,37.540],[127.052,37.536]]},properties:{}},logs:[]},
-  {id:"f5",mapId:"m2",type:"pin",title:"우리 첫 만남 장소",category:"etc",tags:["추억"],emoji:"💕",isHl:true,geojson:{type:"Feature",geometry:{type:"Point",coordinates:[126.978,37.566]},properties:{}},logs:[{id:"l5",date:"2026-02-14",note:"1주년 기념 재방문!",mood:"🥰"}]}
-];
-let activeMapId="m1";
-let roles={};// {mapId:'owner'|'editor'|'observer'}
-let syncVersions={};// {mapId: version}
-let onlineUsers={};// {mapId: [{id,role,ts},...]}
-let selectedId=null,drawMode=null,draftPts=[],filterCats=[],currentTab="map";
-let syncTimer=null,isPulling=false;
-
-// ═══════════════════════════════════════
-// Persistence (localStorage)
-// ═══════════════════════════════════════
-function loadData(){
-  try{const s=localStorage.getItem('loca_v2');if(s){const p=JSON.parse(s);if(p.maps?.length){maps=p.maps;features=p.features||[];CATS=p.cats||CATS;activeMapId=p.activeMapId||maps[0].id;roles=p.roles||{}}}}catch(e){}
-}
-function save(){
-  try{localStorage.setItem('loca_v2',JSON.stringify({maps,features,cats:CATS,activeMapId,roles}))}catch(e){}
-  if(!isPulling){const am=getActiveMap();if(am?.kind==='our'&&canEdit())pushShared(am.id)}
-}
-
-// ═══════════════════════════════════════
-// Role & Permission System
-// ═══════════════════════════════════════
-function getRole(mapId){return roles[mapId]||null}
-function canEdit(){const am=getActiveMap();if(!am)return false;if(am.kind==='my')return true;const r=getRole(am.id);return r==='owner'||r==='editor'}
-function isObserver(){const am=getActiveMap();if(!am||am.kind==='my')return false;return getRole(am.id)==='observer'}
-function roleLabelKo(r){return r==='owner'?'👑 소유자':r==='editor'?'✏️ 편집자':r==='observer'?'👁 관찰자':''}
-function roleBadgeHtml(r){const cls=r==='owner'?'role-owner':r==='editor'?'role-editor':'role-observer';return`<span class="role-badge ${cls}">${roleLabelKo(r)}</span>`}
-
-function applyPermissionUI(){
-  const obs=isObserver();
-  document.querySelectorAll('.editor-only').forEach(el=>{el.style.display=obs?'none':'flex'});
-  document.getElementById('observer-map-banner').style.display=obs?'block':'none';
-  document.getElementById('btn-rename').style.display=obs?'none':'flex';
-  const am=getActiveMap();
-  const si=document.getElementById('sync-indicator');
-  if(am?.kind==='our'){si.style.display='flex';si.innerHTML='<div class="sync-dot sync-active"></div>'}else{si.style.display='none'}
-  const sr=document.getElementById('stats-role');
-  if(am?.kind==='our'){sr.style.display='block';const r=getRole(am.id);sr.innerHTML=roleBadgeHtml(r||'owner')}else{sr.style.display='none'}
-}
-
-// ═══════════════════════════════════════
-// Shared Storage Sync (Real-time)
-// ═══════════════════════════════════════
-async function pushShared(mapId){
-  if(!hasSharedStorage)return;
-  try{
-    const m=maps.find(x=>x.id===mapId);if(!m)return;
-    const fs=features.filter(f=>f.mapId===mapId);
-    const ver=(syncVersions[mapId]||0)+1;syncVersions[mapId]=ver;
-    await window.storage.set('loca-map-'+mapId,JSON.stringify({map:m,features:fs,cats:CATS,ver,ts:Date.now()}),true);
-  }catch(e){console.log('Push failed',e);setSyncStatus('error')}
-}
-
-async function pullShared(mapId){
-  if(!hasSharedStorage)return false;
-  try{
-    const res=await window.storage.get('loca-map-'+mapId,true);
-    if(!res)return false;
-    const d=JSON.parse(res.value);
-    if(d.ver<=(syncVersions[mapId]||0))return false;
-    isPulling=true;
-    syncVersions[mapId]=d.ver;
-    const mIdx=maps.findIndex(x=>x.id===mapId);
-    if(mIdx>=0)maps[mIdx]={...d.map,kind:'our'};
-    else maps.push({...d.map,kind:'our'});
-    features=features.filter(f=>f.mapId!==mapId).concat(d.features||[]);
-    if(d.cats){const cMap=new Map(CATS.map(c=>[c.id,c]));d.cats.forEach(c=>{if(!cMap.has(c.id))cMap.set(c.id,c)});CATS=Array.from(cMap.values())}
-    try{localStorage.setItem('loca_v2',JSON.stringify({maps,features,cats:CATS,activeMapId,roles}))}catch(e){}
-    isPulling=false;
-    return true;
-  }catch(e){isPulling=false;console.log('Pull failed',e);return false}
-}
-
-async function updatePresence(mapId){
-  if(!hasSharedStorage)return;
-  try{
-    let list=[];
-    try{const res=await window.storage.get('loca-pres-'+mapId,true);if(res)list=JSON.parse(res.value)}catch(e){list=[]}
-    const now=Date.now();
-    list=list.filter(u=>u.id!==MY_CLIENT_ID&&(now-u.ts)<15000);
-    list.push({id:MY_CLIENT_ID,role:getRole(mapId)||'owner',ts:now});
-    await window.storage.set('loca-pres-'+mapId,JSON.stringify(list),true);
-    onlineUsers[mapId]=list;
-    renderPresence(mapId);
-  }catch(e){}
-}
-
-function renderPresence(mapId){
-  const el=document.getElementById('stats-presence');
-  const list=onlineUsers[mapId]||[];
-  if(list.length<=1){el.style.display='none';return}
-  el.style.display='flex';
-  el.innerHTML='<span style="font-size:9px;font-weight:900;color:var(--mut)">접속 중 '+list.length+'명</span> '+
-    list.slice(0,8).map(u=>{
-      const c=u.role==='observer'?'#6366F1':u.role==='editor'?'var(--sec)':'#D4960A';
-      const icon=u.role==='observer'?'👁':u.role==='editor'?'✏️':'👑';
-      const me=u.id===MY_CLIENT_ID?' (나)':'';
-      return`<span class="presence-chip" style="border-color:${c}">${icon}${me}</span>`
-    }).join('');
-}
-
-function setSyncStatus(s){
-  const dot=document.querySelector('#sync-indicator .sync-dot');
-  if(!dot)return;
-  dot.className='sync-dot '+(s==='active'?'sync-active':s==='error'?'sync-error':'sync-idle');
-}
-
-function startSync(){
-  stopSync();
-  syncTimer=setInterval(async()=>{
-    const am=getActiveMap();if(!am||am.kind!=='our')return;
-    const changed=await pullShared(am.id);
-    if(changed&&activeMapId===am.id){renderMapFeatures();updateStats()}
-    await updatePresence(am.id);
-    setSyncStatus('active');
-  },3000);
-  // 즉시 한번 실행
-  const am=getActiveMap();if(am?.kind==='our'){pullShared(am.id).then(c=>{if(c){renderMapFeatures();updateStats()}});updatePresence(am.id)}
-}
-function stopSync(){if(syncTimer){clearInterval(syncTimer);syncTimer=null}}
-
-// ═══════════════════════════════════════
-// Share Code System (Role-based)
-// ═══════════════════════════════════════
-function generateShareCode(mapId,role){
-  if(hasSharedStorage){return btoa(unescape(encodeURIComponent(JSON.stringify({mid:mapId,r:role}))))}
-  else{const m=maps.find(x=>x.id===mapId);const fs=features.filter(f=>f.mapId===mapId);return btoa(unescape(encodeURIComponent(JSON.stringify({map:m,features:fs,r:role}))))}
-}
-
-async function importShareCodeAsync(){
-  const code=(document.getElementById('share-input')?.value||'').trim();
-  if(!code){toast('코드가 비어있어요','w');return}
-  try{
-    const d=JSON.parse(decodeURIComponent(escape(atob(code))));
-    const role=d.r||'observer';
-    if(d.mid&&hasSharedStorage){
-      // 경량 코드: 서버에서 가져오기
-      const ok=await pullShared(d.mid);
-      if(!ok){
-        // 아직 데이터가 없을 수 있음 — 일단 등록
-        const existing=maps.find(m=>m.id===d.mid);
-        if(!existing){toast('공유 데이터를 아직 찾을 수 없어요. 소유자가 먼저 데이터를 업로드해야 합니다.','w');return}
-      }
-      roles[d.mid]=role;activeMapId=d.mid;
-      save();renderMapFeatures();fitToFeatures();updateStats();applyPermissionUI();startSync();
-      toast(`${role==='editor'?'✏️ 편집자':'👁 관찰자'}로 참여했어요!`,'s');
-    }else if(d.map&&d.features){
-      // 전체 데이터 코드 (fallback)
-      const m={...d.map,kind:'our'};
-      if(!maps.find(x=>x.id===m.id))maps.push(m);
-      d.features.forEach(f=>{if(!features.find(x=>x.id===f.id))features.push(f)});
-      roles[m.id]=role;activeMapId=m.id;
-      save();renderMapFeatures();fitToFeatures();updateStats();applyPermissionUI();
-      if(hasSharedStorage)pushShared(m.id);
-      startSync();
-      toast(`${role==='editor'?'✏️ 편집자':'👁 관찰자'}로 참여했어요!`,'s');
-    }else throw 0;
-  }catch(e){console.error(e);toast('공유코드를 해석할 수 없어요','e')}
-}
-
-function copyCode(mapId,role){
-  const code=generateShareCode(mapId,role);
-  navigator.clipboard.writeText(code).then(()=>toast(`${role==='editor'?'✏️ 편집자':'👁 관찰자'} 코드를 복사했어요 ✅`,'s')).catch(()=>{
-    // fallback: prompt
-    prompt('아래 코드를 복사하세요:',code);
-  });
-}
-
-// ═══════════════════════════════════════
-// Map
-// ════════════════════
+  <script src="./app.js"></script>
+</body>
+</html>

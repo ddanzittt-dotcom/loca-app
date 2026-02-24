@@ -1,50 +1,51 @@
-const CACHE_NAME = 'loca-cache-v2';
-const URLS_TO_CACHE = [
+/* LOCA Service Worker (minimal) */
+const CACHE = 'loca-cache-v1';
+const ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
+  './styles.css',
+  './app.js',
+  './manifest.webmanifest',
+  './icons/icon.svg'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(URLS_TO_CACHE))
-  );
+self.addEventListener('install', (event) => {
   self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
-      );
-    })
+    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then(fetchResponse => {
-          if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
-            return fetchResponse;
-          }
-          const responseToCache = fetchResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, responseToCache));
-          return fetchResponse;
-        });
-      }).catch(() => {
-        console.log('오프라인 상태입니다.');
-      })
-  );
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(req);
+    if (cached) return cached;
+
+    try {
+      const res = await fetch(req);
+      // same-origin만 캐시
+      const url = new URL(req.url);
+      if (url.origin === self.location.origin) {
+        cache.put(req, res.clone());
+      }
+      return res;
+    } catch (e) {
+      if (req.mode === 'navigate') {
+        return cache.match('./index.html');
+      }
+      throw e;
+    }
+  })());
 });

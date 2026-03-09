@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>LOCA - 나만의 지도</title>
+<meta name="description" content="LOCA - 개인/공유 지도 플랫폼. 장소를 기록하고, 포스터로 공유하세요.">
+<meta name="theme-color" content="#C9686E">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="toasts"></div>
+<div class="confirm-overlay" id="confirm-dialog">
+  <div class="confirm-box">
+    <div style="font-size:14px;font-weight:900;text-align:center" id="confirm-title"></div>
+    <div style="font-size:12px;color:var(--mut);font-weight:700;text-align:center;margin-top:6px" id="confirm-msg"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-out" style="flex:1" onclick="closeConfirm()">취소</button>
+      <button class="btn btn-pri" style="flex:1;background:var(--danger)" onclick="execConfirm()">확인</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="logo">LO<span>CA</span></div>
+    <button id="map-sel-btn" onclick="renderMapSelSheet()">
+      <div class="dot" id="map-dot"></div>
+      <div class="t" id="map-title-display">지도</div>
+      <div id="sync-indicator" style="display:none"></div>
+      <div class="arr">▾</div>
+    </button>
+    <button class="icon-btn" onclick="showNewMapInput('my')" style="color:var(--txt2)">+내지도</button>
+    <button class="icon-btn" onclick="showNewMapInput('our')" style="color:var(--sec)">+공유지도</button>
+    <button class="icon-btn" onclick="showShareSheet()" style="color:var(--pri)">📤</button>
+  </div>
+
+  <!-- Content Screens -->
+  <div id="content">
+    <!-- Map Screen -->
+    <div class="screen active" id="screen-map">
+      <div id="map-container"><div id="map"></div>
+        <div class="map-search">
+          <div class="search-box">
+            <span style="font-size:14px;opacity:.65">🔍</span>
+            <input id="search-input" placeholder="주소 또는 지명 검색…" oninput="onSearch(this.value)">
+            <button class="btn btn-out" style="padding:5px 9px;font-size:11px;display:none" id="search-clear" onclick="clearSearch()">✕</button>
+          </div>
+          <div class="search-results" id="search-results"></div>
+        </div>
+        <div id="observer-map-banner" style="display:none;position:absolute;top:60px;left:10px;right:10px;z-index:2100">
+          <div class="observer-banner"><div style="font-size:18px">👁</div><div style="font-size:11px;font-weight:800;color:#6366F1">관찰자 모드</div></div>
+        </div>
+        <div class="draw-pill" id="draw-pill"></div>
+        <div class="draw-ctrl" id="draw-ctrl">
+          <button class="btn btn-out" style="flex:1" onclick="undoDraft()">↩ (<span id="pts-count">0</span>)</button>
+          <button class="btn btn-sec" style="flex:1" onclick="finishDraft()">✅ 완료</button>
+          <button class="btn btn-danger" style="padding:11px" onclick="cancelDraft()">✕</button>
+        </div>
+        <div class="filter-bar" id="filter-bar">
+          <div onclick="toggleFilterBar()" style="cursor:pointer;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:900;color:var(--txt2)">
+            필터 <span id="filter-count" style="font-size:9px;color:var(--pri)"></span>
+            <span id="filter-arrow" style="font-size:9px">▲</span>
+          </div>
+          <div id="filter-content" style="display:none;margin-top:8px">
+            <div style="display:flex;gap:5px;flex-wrap:wrap" id="filter-chips"></div>
+          </div>
+        </div>
+        <div class="stats-pill">
+          <div class="t" id="stats-title">-</div>
+          <div class="s" id="stats-sub"></div>
+          <div class="s" id="stats-role" style="display:none"></div>
+          <div class="presence-row mt-8" id="stats-presence" style="display:none"></div>
+        </div>
+        <div id="mini-card" style="display:none;position:absolute;left:10px;right:72px;bottom:80px;z-index:2300;background:rgba(255,255,255,.96);border:1px solid var(--bdr);border-radius:18px;padding:12px;box-shadow:0 12px 32px rgba(0,0,0,.14)"></div>
+        <div class="fab-col">
+          <button class="fab" onclick="goToMyLocation()">📡<span class="fab-label">내 위치</span></button>
+          <button class="fab editor-only" id="fab-pin" onclick="toggleDraw('pin')">📍<span class="fab-label">핀</span></button>
+          <button class="fab editor-only" id="fab-line" onclick="toggleDraw('line')">🔀<span class="fab-label">경로</span></button>
+          <button class="fab editor-only" id="fab-poly" onclick="toggleDraw('poly')">⬡<span class="fab-label">구역</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- List Screen -->
+    <div class="screen" id="screen-list">
+      <div style="padding:12px 14px 6px">
+        <div style="font-size:18px;font-weight:900">📋 피처 목록</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;margin-top:2px" id="list-subtitle"></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
+          <div class="search-box" style="flex:1;margin:0">
+            <span style="font-size:13px;opacity:.6">🔍</span>
+            <input id="list-search" placeholder="검색…" oninput="renderList()">
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:8px;overflow-x:auto;padding-bottom:4px;flex-shrink:0;align-items:center" id="search-mode-tabs"></div>
+        <div id="list-chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center"></div>
+      </div>
+      <div class="list-scroll" id="list-scroll"></div>
+    </div>
+
+    <!-- Together Screen -->
+    <div class="screen" id="screen-together">
+      <div class="page-scroll" id="together-scroll"></div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div class="screen" id="screen-settings">
+      <div class="page-scroll">
+        <div class="page-title">⚙️ 설정</div>
+        <div class="mt-14">
+          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="exportJson()">
+            <div style="font-size:22px">📦</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:900">지도 백업</div><div style="font-size:10px;color:var(--mut);font-weight:700;margin-top:2px">LOCA 데이터를 파일로 저장</div></div>
+          </div>
+          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="showImportSheet()">
+            <div style="font-size:22px">📥</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:900">지도 가져오기</div><div style="font-size:10px;color:var(--mut);font-weight:700;margin-top:2px">네이버/카카오맵 URL 파싱</div></div>
+          </div>
+          <input type="file" id="import-file" accept=".json,.kml,.gpx" style="display:none" onchange="importFile(event)">
+          <div class="card" style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="resetAll()">
+            <div style="font-size:22px">🧹</div>
+            <div style="flex:1;font-size:13px;font-weight:900">초기화</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div id="tabbar">
+    <button class="tab-btn on" data-tab="map" onclick="switchTab('map')"><div class="ic">🗺</div><div class="lb">내 지도</div><div class="ind"></div></button>
+    <button class="tab-btn" data-tab="list" onclick="switchTab('list')"><div class="ic">📋</div><div class="lb">목록</div><div class="ind"></div></button>
+    <button class="tab-btn" data-tab="together" onclick="switchTab('together')"><div class="ic">👥</div><div class="lb">함께</div><div class="ind"></div></button>
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')"><div class="ic">⚙️</div><div class="lb">설정</div><div class="ind"></div></button>
+  </div>
+</div>
+
+<!-- Bottom Sheets -->
+<div class="overlay" id="sheet-mapsel"><div class="bg" onclick="closeSheet('mapsel')"></div><div class="sheet" style="max-height:72vh"><div class="handle"><div></div></div><div class="sheet-body" id="mapsel-body"></div></div></div>
+<div class="overlay" id="sheet-detail"><div class="bg" onclick="closeSheet('detail')"></div><div class="sheet" style="max-height:85vh"><div class="handle"><div></div></div><div class="sheet-body" id="detail-body"></div></div></div>
+<div class="overlay" id="sheet-poster"><div class="bg" onclick="closeSheet('poster')"></div><div class="sheet" style="max-height:92vh"><div class="handle"><div></div></div><div class="sheet-body" id="poster-body"></div></div></div>
+<div class="overlay" id="sheet-rename"><div class="bg" onclick="closeSheet('rename')"></div><div class="sheet" style="max-height:50vh"><div class="handle"><div></div></div><div class="sheet-body" id="rename-body"></div></div></div>
+<div class="overlay" id="sheet-newmap"><div class="bg" onclick="closeSheet('newmap')"></div><div class="sheet" style="max-height:50vh"><div class="handle"><div></div></div><div class="sheet-body" id="newmap-body"></div></div></div>
+<div class="overlay" id="sheet-import"><div class="bg" onclick="closeSheet('import')"></div><div class="sheet" style="max-height:70vh"><div class="handle"><div></div></div><div class="sheet-body" id="import-body"></div></div></div>
+<div class="overlay" id="sheet-catmgr"><div class="bg" onclick="closeSheet('catmgr')"></div><div class="sheet" style="max-height:80vh"><div class="handle"><div></div></div><div class="sheet-body" id="catmgr-body"></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
